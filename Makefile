@@ -26,7 +26,7 @@ CTL_SRC=$(SRC_DIR)/gladius-controld
 CTL_DEST=$(DST_DIR)/gladius-controld$(BINARY_SUFFIX)
 
 # commands for go
-GOBUILD=go build
+GOBUILD=CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -extldflags "-static"'
 GOTEST=go test
 ##
 # MAKE TARGETS
@@ -59,3 +59,6 @@ lint:
 
 controld: test
 	$(GOBUILD) -o $(CTL_DEST) $(CTL_SRC)
+
+docker: test
+	$(GOBUILD) -o /gladius-controld $(CTL_SRC)
