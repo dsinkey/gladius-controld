@@ -63,7 +63,10 @@ func PoolRetrieveNodesHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	poolAddress := common.HexToAddress(vars["poolAddress"])
-	nodeAddresses, _ := blockchain.PoolNodes(poolAddress.String())
+	nodeAddresses, err := blockchain.PoolNodes(poolAddress.String())
+	if err != nil {
+		fmt.Println(err)
+	}
 	status := vars["status"]
 	statusInt, err := blockchain.ApplicationStatusFromString(status)
 	if err != nil {
