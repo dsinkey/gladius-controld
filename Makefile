@@ -26,8 +26,46 @@ CTL_SRC=$(SRC_DIR)/gladius-controld
 CTL_DEST=$(DST_DIR)/gladius-controld$(BINARY_SUFFIX)
 
 # commands for go
-GOBUILD=CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -extldflags "-static"'
+#GOBUILD=CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -extldflags "-static"'
+GOBUILD=go build -a
 GOTEST=go test
+
+ifeq ($(OS),Windows_NT)
+	DOCKER_OS ?= windows
+	ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
+		DOCKER_ARCH ?= amd64
+	else
+		ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+			DOCKER_ARCH ?= amd64
+		endif
+		ifeq ($(PROCESSOR_ARCHITECTURE),x86)
+			DOCKER_ARCH ?= 386
+		endif
+	endif
+else
+	# check if we are running mac os x - by default we will use amd64 in thise case (docker for mac is a linux 64bit machine)
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Darwin)
+		DOCKER_OS ?= linux
+		DOCKER_ARCH ?= amd64
+	endif
+	# if we run linux we need to check which processor arch we run on
+	ifeq ($(UNAME_S),Linux)
+		DOCKER_OS ?= linux
+		UNAME_M := $(shell uname -m)
+		ifeq ($(UNAME_M),x86_64)
+			DOCKER_ARCH ?= amd64
+		endif
+		ifneq ($(filter %86,$(UNAME_M)),)
+			DOCKER_ARCH ?= 386
+		endif
+		ifneq ($(filter %arm,$(UNAME_M)),)
+			DOCKER_ARCH ?= arm
+		endif
+    endif
+endif
+
+
 ##
 # MAKE TARGETS
 ##
@@ -59,6 +97,12 @@ lint:
 
 controld: test
 	$(GOBUILD) -o $(CTL_DEST) $(CTL_SRC)
+
+docker_image:
+	docker build --tag gladiusio:gladius-controld \
+		--build-arg gladius_os=${DOCKER_OS} \
+		--build-arg gladius_architecture=${DOCKER_ARCH} \
+		.
 
 docker: test
 	$(GOBUILD) -o /gladius-controld $(CTL_SRC)
