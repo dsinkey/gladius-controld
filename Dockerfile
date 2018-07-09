@@ -18,7 +18,6 @@ RUN touch ${GLADIUSBASE}/gladius-controld.toml
 
 ########################################
 
-# Make the minimal container to distribute with only the controld and needed files
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
 
